@@ -16,12 +16,13 @@ from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+ALLOWED_HOSTS = ["ailectus.com", "www.ailectus.com"]
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 SECRET_KEY = config("DJANGO_SECRET_KEY", default="cambia-esto")
 DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
+FORCE_SCRIPT_NAME = config("FORCE_SCRIPT_NAME", default="")
 
 ALLOWED_HOSTS = []
 
@@ -36,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'memories',
+    'usuarios',
 ]
 
 MIDDLEWARE = [
@@ -124,8 +126,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+STATIC_URL = (FORCE_SCRIPT_NAME or "") + "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+MEDIA_URL = (FORCE_SCRIPT_NAME or "") + "/media/"
+MEDIA_ROOT = BASE_DIR / "media"

@@ -66,6 +66,8 @@ class Foto(models.Model):
     visible = models.BooleanField(default=True)
     destacada = models.BooleanField(default=False)
 
+    owner_session_id = models.CharField(max_length=64, blank=True, db_index=True)
+
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:

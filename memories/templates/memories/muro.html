@@ -3,16 +3,43 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
+
     <div>
         <h3 class="mb-1 text-white">🧱 Muro de fotos</h3>
         <div class="text-white">{{ evento.nombre }}</div>
     </div>
-    <div class="d-flex gap-2">
+
+    <div class="d-flex align-items-center gap-2">
+
+        <!-- Acciones principales -->
         <a class="btn btn-primary"
-            href="{% url 'subir_fotos' evento.token %}{% if momento_seleccionado %}?momento={{ momento_seleccionado.id }}{% endif %}">
+           href="{% url 'memories:subir_fotos' evento.token %}{% if momento_seleccionado %}?momento={{ momento_seleccionado.id }}{% endif %}">
             📸 Subir
         </a>
-        <a class="btn btn-outline-light" href="{% url 'evento_home' evento.token %}">Inicio</a>
+
+        <a class="btn btn-outline-light"
+           href="{% url 'memories:evento_home' evento.token %}">
+            Inicio
+        </a>
+
+        <!-- Separador visual sutil -->
+        <div class="vr text-white opacity-50 mx-1"></div>
+
+        <!-- Login / Logout discreto -->
+        {% if user.is_authenticated %}
+            <a class="btn btn-outline-danger btn-sm shadow-sm"
+               href="{% url 'usuarios:logout' %}?next={{ request.get_full_path|urlencode }}"
+               title="Cerrar sesión">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        {% else %}
+            <a class="btn btn-outline-light btn-sm shadow-sm"
+               href="{% url 'usuarios:login' %}?next={{ request.get_full_path|urlencode }}"
+               title="Iniciar sesión">
+                <i class="bi bi-box-arrow-in-right"></i>
+            </a>
+        {% endif %}
+
     </div>
 </div>
 
@@ -20,11 +47,11 @@
     <div class="fw-semibold mb-2">Filtrar por momento</div>
     <div class="d-flex flex-wrap gap-2">
         <a class="btn btn-sm {% if not momento_seleccionado %}btn-dark{% else %}btn-outline-dark{% endif %} chip"
-            href="{% url 'muro' evento.token %}">Todo</a>
+            href="{% url 'memories:muro' evento.token %}">Todo</a>
 
         {% for m in momentos %}
         <a class="btn btn-sm {% if momento_seleccionado and m.id == momento_seleccionado.id %}btn-dark{% else %}btn-outline-dark{% endif %} chip"
-            href="{% url 'muro' evento.token %}?momento={{ m.id }}">
+            href="{% url 'memories:muro' evento.token %}?momento={{ m.id }}">
             {{ m.emoji }} {{ m.nombre }}
         </a>
         {% endfor %}
@@ -38,9 +65,29 @@
         <a href="{{ f.imagen.url }}" target="_blank" style="text-decoration:none;">
             <img src="{{ f.imagen.url }}" alt="Foto">
         </a>
+        {% if user.is_authenticated %}
+        <button type="button" class="btn btn-sm btn-danger w-100 mt-2" data-bs-toggle="modal"
+            data-bs-target="#modalEliminar" data-foto-id="{{ f.id }}"
+            data-momento-id="{% if momento_seleccionado %}{{ momento_seleccionado.id }}{% endif %}">
+            🗑️ Ocultar foto
+        </button>
+
+        {% else %}
+        {% if f.puede_ocultar %}
+        <button type="button" class="btn btn-sm btn-danger w-100 mt-2" data-bs-toggle="modal"
+            data-bs-target="#modalEliminar" data-foto-id="{{ f.id }}"
+            data-momento-id="{% if momento_seleccionado %}{{ momento_seleccionado.id }}{% endif %}">
+            🗑️ Ocultar mi foto
+        </button>
+        {% elif f.es_mia %}
+        <div class="small text-muted mt-2 text-center">
+            ⏳ Ya pasó el tiempo (10 min)
+        </div>
+        {% endif %}
+        {% endif %}
         {% if f.nombre_invitado or f.mensaje %}
         <div class="mt-2 px-1">
-            <div class="small text-muted">{{ f.momento.emoji }} {{ f.momento.nombre }}</div>
+            <div class="small text-white">{{ f.momento.emoji }} {{ f.momento.nombre }}</div>
             {% if f.mensaje %}
             <div class="small">{{ f.mensaje }}</div>
             {% endif %}
@@ -57,4 +104,60 @@
     Aún no hay fotos. ¡Sé el primero en subir! 📸
 </div>
 {% endif %}
+
+<!-- Modal eliminar -->
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">¿Ocultar esta foto?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Podrás ocultarla solo durante los primeros 10 minutos después de subirla.
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <form id="formEliminar" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="momento" id="modalMomentoInput">
+                    <button type="submit" class="btn btn-danger">
+                        Sí, ocultar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const modal = document.getElementById('modalEliminar');
+        const form = document.getElementById('formEliminar');
+        const momentoInput = document.getElementById('modalMomentoInput');
+
+        modal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+
+            const fotoId = button.getAttribute('data-foto-id');
+            const momentoId = button.getAttribute('data-momento-id');
+
+            // Construir action dinámico
+            form.action = `/e/{{ evento.token }}/foto/${fotoId}/ocultar/`;
+
+            if (momentoId) {
+                momentoInput.value = momentoId;
+            } else {
+                momentoInput.value = "";
+            }
+        });
+
+    });
+</script>
+
 {% endblock %}
