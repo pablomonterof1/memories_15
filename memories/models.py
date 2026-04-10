@@ -1,5 +1,10 @@
 from django.db import models
 from django.utils import timezone
+from io import BytesIO
+from pathlib import Path
+
+from PIL import Image, ImageOps
+from django.core.files.base import ContentFile
 
 
 class Evento(models.Model):
@@ -51,11 +56,6 @@ class Momento(models.Model):
 
 
 class Foto(models.Model):
-    """
-    Foto subida por invitados.
-    - momento es obligatorio (Opción A)
-    - visible permite moderación (ocultar sin borrar)
-    """
     evento = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name="fotos")
     momento = models.ForeignKey(Momento, on_delete=models.PROTECT, related_name="fotos")
 
@@ -78,3 +78,55 @@ class Foto(models.Model):
     def __str__(self):
         invitado = self.nombre_invitado.strip() or "Anónimo"
         return f"{invitado} - {self.momento}"
+
+    def save(self, *args, **kwargs):
+        """
+        Optimiza la imagen automáticamente:
+        - corrige orientación
+        - convierte a RGB
+        - reduce tamaño máximo
+        - guarda como JPEG comprimido
+        """
+        if self.imagen and not kwargs.pop("skip_optimize", False):
+            try:
+                self.imagen.open()
+                img = Image.open(self.imagen)
+
+                # Corrige orientación de fotos tomadas en celular
+                img = ImageOps.exif_transpose(img)
+
+                # Convierte a RGB si viene PNG, WEBP, HEIC convertido, etc.
+                if img.mode in ("RGBA", "P"):
+                    background = Image.new("RGB", img.size, (255, 255, 255))
+                    if img.mode == "RGBA":
+                        background.paste(img, mask=img.split()[-1])
+                    else:
+                        background.paste(img)
+                    img = background
+                elif img.mode != "RGB":
+                    img = img.convert("RGB")
+
+                # Redimensiona manteniendo proporción
+                max_size = (1600, 1600)
+                img.thumbnail(max_size, Image.Resampling.LANCZOS)
+
+                # Guarda optimizada en memoria
+                output = BytesIO()
+                img.save(
+                    output,
+                    format="JPEG",
+                    quality=80,
+                    optimize=True,
+                )
+                output.seek(0)
+
+                original_name = Path(self.imagen.name).stem
+                new_name = f"{original_name}.jpg"
+
+                self.imagen.save(new_name, ContentFile(output.read()), save=False)
+
+            except Exception:
+                # Si algo falla, guarda la imagen original sin romper el flujo
+                pass
+
+        super().save(*args, **kwargs)
