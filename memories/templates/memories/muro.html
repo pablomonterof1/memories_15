@@ -62,14 +62,14 @@
 <div class="masonry">
     {% for f in fotos %}
     <div class="masonry-item">
-        <a href="{{ f.imagen.url }}" target="_blank" style="text-decoration:none;">
+        <a href="{% url 'memories:foto_detalle' evento.token f.id %}{% if momento_seleccionado %}?momento={{ momento_seleccionado.id }}{% endif %}" style="text-decoration:none;">
             <img src="{{ f.imagen.url }}" alt="Foto">
         </a>
         {% if user.is_authenticated %}
         <button type="button" class="btn btn-sm btn-danger w-100 mt-2" data-bs-toggle="modal"
             data-bs-target="#modalEliminar" data-foto-id="{{ f.id }}"
             data-momento-id="{% if momento_seleccionado %}{{ momento_seleccionado.id }}{% endif %}">
-            🗑️ Ocultar foto
+            🗑️ Borrar foto
         </button>
 
         {% else %}
@@ -77,25 +77,26 @@
         <button type="button" class="btn btn-sm btn-danger w-100 mt-2" data-bs-toggle="modal"
             data-bs-target="#modalEliminar" data-foto-id="{{ f.id }}"
             data-momento-id="{% if momento_seleccionado %}{{ momento_seleccionado.id }}{% endif %}">
-            🗑️ Ocultar mi foto
+            🗑️ Borrar mi foto
         </button>
-        {% elif f.es_mia %}
-        <div class="small text-muted mt-2 text-center">
-            ⏳ Ya pasó el tiempo (10 min)
-        </div>
+        <{% elif f.es_mia %}
+        <!--div class="small text-muted mt-2 text-center">
+        ⏳ Ya pasó el tiempo (10 min)
+        </div> -->
         {% endif %}
         {% endif %}
         {% if f.nombre_invitado or f.mensaje %}
-        <div class="mt-2 px-1">
+        <!-- <div class="mt-2 px-1">
             <div class="small text-white">{{ f.momento.emoji }} {{ f.momento.nombre }}</div>
             {% if f.mensaje %}
-            <div class="small">{{ f.mensaje }}</div>
+            <div class="small text-white">{{ f.mensaje }}</div>
             {% endif %}
             {% if f.nombre_invitado %}
-            <div class="small text-muted">— {{ f.nombre_invitado }}</div>
+            <div class="small text-white">— {{ f.nombre_invitado }}</div>
             {% endif %}
-        </div>
+        </div> -->
         {% endif %}
+        <div class="small text-white">{{ f.momento.emoji }} {{ f.momento.nombre }}</div>
     </div>
     {% endfor %}
 </div>
@@ -110,11 +111,11 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-0">
-                <h5 class="modal-title">¿Ocultar esta foto?</h5>
+                <h5 class="modal-title">Borrar esta foto?</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                Podrás ocultarla solo durante los primeros 10 minutos después de subirla.
+                Podrás borrar la solo durante los primeros 10 minutos después de subirla.
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
@@ -125,7 +126,7 @@
                     {% csrf_token %}
                     <input type="hidden" name="momento" id="modalMomentoInput">
                     <button type="submit" class="btn btn-danger">
-                        Sí, ocultar
+                        Sí, borrar
                     </button>
                 </form>
             </div>

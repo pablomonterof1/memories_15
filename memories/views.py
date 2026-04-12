@@ -54,7 +54,7 @@ def subir_fotos(request, token):
                     visible=True,
                 )
 
-            return redirect("muro", token=evento.token)
+            return redirect("memories:muro", token=evento.token)
     else:
         # ✅ Preselección SOLO si viene ?momento=<id>
         initial = {}
@@ -108,6 +108,27 @@ def muro(request, token):
 
 
 
+def foto_detalle(request, token, foto_id):
+    evento = get_object_or_404(Evento, token=token, activo=True)
+    foto = get_object_or_404(
+        Foto.objects.select_related("momento"),
+        id=foto_id,
+        evento=evento,
+        visible=True,
+    )
+
+    momento_id = request.GET.get("momento")
+    back_url = reverse("memories:muro", kwargs={"token": token})
+    if momento_id:
+        back_url = f"{back_url}?momento={momento_id}"
+
+    return render(request, "memories/foto_detalle.html", {
+        "evento": evento,
+        "foto": foto,
+        "back_url": back_url,
+    })
+
+
 @require_POST
 def ocultar_foto(request, token, foto_id):
     evento = get_object_or_404(Evento, token=token, activo=True)
@@ -135,6 +156,6 @@ def ocultar_foto(request, token, foto_id):
     # Volver al muro conservando filtro si viene
     momento = request.POST.get("momento")
     if momento:
-        return redirect(f"{reverse('muro', kwargs={'token': token})}?momento={momento}")
+        return redirect(f"{reverse('memories:muro', kwargs={'token': token})}?momento={momento}")
 
-    return redirect("muro", token=token)
+    return redirect("memories:muro", token=token)

@@ -25,6 +25,10 @@
         <div class="mb-3">
           <label class="form-label fw-semibold">Momento *</label>
           {{ form.momento }}
+          <div id="imagenesEstado" class="form-text mt-2 text-muted">
+            Puedes seleccionar hasta 3 fotos.
+          </div>
+          <div id="previewGrid" class="row g-2 mt-1"></div>
         </div>
 
         <div class="mb-3">
@@ -50,4 +54,92 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("id_imagenes");
+    const estado = document.getElementById("imagenesEstado");
+    const previewGrid = document.getElementById("previewGrid");
+    const submitBtn = document.querySelector("button[type='submit']");
+    const MAX_FILES = 3;
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+    if (!input || !submitBtn) return;
+
+    const formatSize = (bytes) => {
+      const mb = bytes / (1024 * 1024);
+      return `${mb.toFixed(2)} MB`;
+    };
+
+    const actualizarEstado = (files) => {
+      if (!files.length) {
+        estado.className = "form-text mt-2 text-muted";
+        estado.textContent = "Puedes seleccionar hasta 3 fotos.";
+        submitBtn.disabled = false;
+        return;
+      }
+
+      let mensaje = "";
+      let esValido = true;
+
+      if (files.length > MAX_FILES) {
+        esValido = false;
+        mensaje = `Seleccionaste ${files.length} fotos. Máximo permitido: ${MAX_FILES}.`;
+      } else {
+        const fueraDePeso = files.filter(f => f.size > MAX_SIZE);
+        if (fueraDePeso.length > 0) {
+          esValido = false;
+          const nombres = fueraDePeso.map(f => `${f.name} (${formatSize(f.size)})`).join(", ");
+          mensaje = `Estas fotos exceden 5MB: ${nombres}`;
+        } else {
+          mensaje = "✅ Fotos válidas para subir.";
+        }
+      }
+
+      estado.className = `form-text mt-2 ${esValido ? "text-success" : "text-danger"}`;
+      estado.textContent = mensaje;
+      submitBtn.disabled = !esValido;
+    };
+
+    const pintarMiniaturas = (files) => {
+      previewGrid.innerHTML = "";
+      files.slice(0, MAX_FILES).forEach((file) => {
+        const col = document.createElement("div");
+        col.className = "col-4";
+
+        const card = document.createElement("div");
+        card.className = "border rounded-3 overflow-hidden bg-white";
+
+        const img = document.createElement("img");
+        img.className = "w-100";
+        img.style.aspectRatio = "1 / 1";
+        img.style.objectFit = "cover";
+        img.alt = file.name;
+
+        const info = document.createElement("div");
+        info.className = "small px-2 py-1 text-truncate";
+        info.textContent = `${file.name} · ${formatSize(file.size)}`;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        card.appendChild(img);
+        card.appendChild(info);
+        col.appendChild(card);
+        previewGrid.appendChild(col);
+      });
+    };
+
+    input.addEventListener("change", () => {
+      const files = Array.from(input.files || []);
+      actualizarEstado(files);
+      pintarMiniaturas(files);
+    });
+  });
+</script>
 {% endblock %}
