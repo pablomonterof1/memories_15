@@ -11,6 +11,10 @@ from .forms import FotoUploadForm
 from usuarios.views import login_view
 from usuarios.urls import urlpatterns as usuarios_urlpatterns
 
+def intro(request, token):
+    evento = Evento.objects.get(token=token)
+    return render(request, "memories/intro.html", {"evento": evento})
+
 def _get_anon_session_id(request):
     anon_id = request.session.get("anon_id")
     if not anon_id:

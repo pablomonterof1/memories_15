@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Bienvenida ✨</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500&family=Great+Vibes&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(circle at center, #0f172a, #020617);
+    font-family: 'Cinzel', serif;
+    color: white;
+}
+
+/* ✨ partículas doradas */
+.particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: gold;
+    border-radius: 50%;
+    opacity: 0;
+    animation: floatZoom 6s infinite ease-in-out;
+}
+
+/* ✨ animación tipo magia */
+@keyframes floatZoom {
+    0% {
+        transform: translateY(0px) scale(0.3);
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(-150px) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-300px) scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* 🌹 contenido */
+.container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    text-align: center;
+    opacity: 0;
+    animation: fadeZoom 2s forwards ease;
+    animation-delay: 1s;
+}
+
+@keyframes fadeZoom {
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.title {
+    font-family: 'Great Vibes', cursive;
+    font-size: 3.5rem;
+    color: gold;
+}
+
+.subtitle {
+    margin-top: 10px;
+    font-size: 1.2rem;
+    opacity: 0.8;
+}
+
+/* botón */
+.btn-enter {
+    margin-top: 30px;
+    padding: 12px 35px;
+    border-radius: 40px;
+    border: 2px solid gold;
+    background: transparent;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: 0.4s;
+}
+
+.btn-enter:hover {
+    background: gold;
+    color: black;
+    transform: scale(1.1);
+    box-shadow: 0 0 20px gold;
+}
+
+/* 🌹 pétalos */
+.petal {
+    position: absolute;
+    font-size: 18px;
+    animation: fall linear infinite;
+}
+
+@keyframes fall {
+    from { transform: translateY(-10vh) rotate(0deg); }
+    to { transform: translateY(110vh) rotate(360deg); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="glow"></div>
+
+<!-- estrellas -->
+<script>
+for (let i = 0; i < 60; i++) {
+    let p = document.createElement("div");
+    p.className = "particle";
+
+    p.style.left = Math.random() * 100 + "vw";
+    p.style.top = Math.random() * 100 + "vh";
+
+    p.style.animationDuration = (Math.random() * 3 + 4) + "s";
+    p.style.animationDelay = Math.random() * 5 + "s";
+
+    document.body.appendChild(p);
+}
+</script>
+
+<!-- pétalos -->
+<script>
+for (let i = 0; i < 20; i++) {
+    let p = document.createElement("div");
+    p.className = "petal";
+    p.innerHTML = "🌹";
+    p.style.left = Math.random() * 100 + "vw";
+    p.style.animationDuration = (Math.random() * 5 + 5) + "s";
+    document.body.appendChild(p);
+}
+</script>
+
+<div class="container">
+    <div class="title">Mis 15 Ytzel</div>
+    <div class="subtitle">Una noche mágica e inolvidable ✨</div>
+
+    <button class="btn-enter" onclick="entrar()">
+        Entrar
+    </button>
+</div>
+
+<script>
+function entrar() {
+    document.body.style.transition = "1s";
+    document.body.style.opacity = 0;
+
+    setTimeout(() => {
+        window.location.href = "{% url 'memories:evento_home' evento.token %}";
+    }, 1000);
+}
+</script>
+
+</body>
+</html>

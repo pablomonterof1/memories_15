@@ -4,6 +4,7 @@ from . import views
 app_name = "memories"
 
 urlpatterns = [
+    path("intro/<slug:token>/", views.intro, name="intro"),
     path("e/<slug:token>/", views.evento_home, name="evento_home"),
     path("e/<slug:token>/subir/", views.subir_fotos, name="subir_fotos"),
     path("e/<slug:token>/muro/", views.muro, name="muro"),

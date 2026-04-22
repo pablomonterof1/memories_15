@@ -11,7 +11,7 @@
         <a class="btn btn-outline-dark btn-sm" href="{% url 'memories:evento_home' evento.token %}">Volver</a>
       </div>
 
-      <div class="text-muted mt-2">Selecciona el momento (obligatorio) y sube 1 a 3 fotos.</div>
+      <div class="text-white mt-2">Selecciona el momento (obligatorio) y sube 1 a 3 fotos.</div>
 
       {% if form.errors %}
         <div class="alert alert-danger mt-3">
@@ -25,7 +25,7 @@
         <div class="mb-3">
           <label class="form-label fw-semibold">Momento *</label>
           {{ form.momento }}
-          <div id="imagenesEstado" class="form-text mt-2 text-muted">
+          <div id="imagenesEstado" class="form-text mt-2 text-white">
             Puedes seleccionar hasta 3 fotos.
           </div>
           <div id="previewGrid" class="row g-2 mt-1"></div>
