@@ -18,7 +18,6 @@ body {
     color: white;
 }
 
-/* ✨ partículas doradas */
 .particle {
     position: absolute;
     width: 6px;
@@ -29,7 +28,6 @@ body {
     animation: floatZoom 6s infinite ease-in-out;
 }
 
-/* ✨ animación tipo magia */
 @keyframes floatZoom {
     0% {
         transform: translateY(0px) scale(0.3);
@@ -48,16 +46,17 @@ body {
     }
 }
 
-/* 🌹 contenido */
 .container {
     position: absolute;
     top: 50%;
     left: 50%;
+    width: min(92vw, 520px);
     transform: translate(-50%, -50%) scale(0.9);
     text-align: center;
     opacity: 0;
     animation: fadeZoom 2s forwards ease;
     animation-delay: 1s;
+    z-index: 5;
 }
 
 @keyframes fadeZoom {
@@ -75,11 +74,10 @@ body {
 
 .subtitle {
     margin-top: 10px;
-    font-size: 1.2rem;
-    opacity: 0.8;
+    font-size: 1.1rem;
+    opacity: 0.85;
 }
 
-/* botón */
 .btn-enter {
     margin-top: 30px;
     padding: 12px 35px;
@@ -99,7 +97,6 @@ body {
     box-shadow: 0 0 20px gold;
 }
 
-/* 🌹 pétalos */
 .petal {
     position: absolute;
     font-size: 18px;
@@ -110,14 +107,148 @@ body {
     from { transform: translateY(-10vh) rotate(0deg); }
     to { transform: translateY(110vh) rotate(360deg); }
 }
+
+/* Confirmación de asistencia */
+.attendance-box {
+    margin: 28px auto 0;
+    width: 100%;
+    padding: 22px;
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    border-radius: 22px;
+    background: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 35px rgba(255, 215, 0, 0.12);
+    box-sizing: border-box;
+}
+
+.attendance-box h3 {
+    margin: 0 0 8px;
+    color: gold;
+    font-size: 1.3rem;
+}
+
+.attendance-box p {
+    margin: 0 0 16px;
+    font-size: .9rem;
+    opacity: .85;
+}
+
+.search-form {
+    display: flex;
+    gap: 8px;
+}
+
+.search-form input,
+.result-card select {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.25);
+    background: rgba(255,255,255,.95);
+    color: #111;
+    font-family: Arial, sans-serif;
+}
+
+.search-form button,
+.result-card button {
+    padding: 11px 16px;
+    border-radius: 14px;
+    border: none;
+    background: gold;
+    color: #111;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.results {
+    margin-top: 15px;
+    display: grid;
+    gap: 12px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.result-card {
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.16);
+    display: grid;
+    gap: 9px;
+    text-align: left;
+}
+
+.guest-name {
+    font-weight: bold;
+    color: white;
+}
+
+.guest-passes,
+.already {
+    font-size: .85rem;
+    opacity: .85;
+}
+
+.alert {
+    padding: 10px 12px;
+    border-radius: 14px;
+    margin-bottom: 12px;
+    font-size: .9rem;
+    font-family: Arial, sans-serif;
+}
+
+.alert.success {
+    background: rgba(34,197,94,.18);
+    border: 1px solid rgba(34,197,94,.45);
+}
+
+.alert.error {
+    background: rgba(239,68,68,.18);
+    border: 1px solid rgba(239,68,68,.45);
+}
+
+@media (max-width: 520px) {
+    body {
+        overflow-y: auto;
+    }
+
+    .container {
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        width: 92vw;
+        margin: 55px auto;
+        animation: fadeMobile 2s forwards ease;
+        animation-delay: 1s;
+    }
+
+    @keyframes fadeMobile {
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .title {
+        font-size: 3rem;
+    }
+
+    .search-form {
+        flex-direction: column;
+    }
+
+    .search-form button {
+        width: 100%;
+    }
+}
 </style>
 </head>
 
 <body>
 
-<div class="glow"></div>
-
-<!-- estrellas -->
 <script>
 for (let i = 0; i < 60; i++) {
     let p = document.createElement("div");
@@ -133,7 +264,6 @@ for (let i = 0; i < 60; i++) {
 }
 </script>
 
-<!-- pétalos -->
 <script>
 for (let i = 0; i < 20; i++) {
     let p = document.createElement("div");
@@ -148,10 +278,86 @@ for (let i = 0; i < 20; i++) {
 <div class="container">
     <div class="title">Mis 15 Ytzel</div>
     <div class="subtitle">Una noche mágica e inolvidable ✨</div>
+    /* Aquí va el bloque de confirmación de asistencia o el botón de entrada, dependiendo del estado */
+    {% with modo_confirmacion=True %}
 
-    <button class="btn-enter" onclick="entrar()">
-        Entrar
-    </button>
+        {% if modo_confirmacion %}
+
+            <div class="attendance-box">
+                <h3>Confirma tu asistencia</h3>
+                <p>Busca tu nombre o tu apellido y confirma cuántos pases asistirán.</p>
+
+                {% if mensaje %}
+                    <div class="alert success">{{ mensaje }}</div>
+                {% endif %}
+
+                {% if error %}
+                    <div class="alert error">{{ error }}</div>
+                {% endif %}
+
+                <form method="get" class="search-form">
+                    <input type="text" name="q" value="{{ busqueda }}" placeholder="Escribe tu nombre o apellido">
+                    <button type="submit">Buscar</button>
+                </form>
+
+                {% if asistentes %}
+                    <div class="results">
+                        {% for a in asistentes %}
+                            <form method="post" class="result-card">
+                                {% csrf_token %}
+
+                                <input type="hidden" name="asistente_id" value="{{ a.id }}">
+
+                                <div class="guest-name">
+                                    {{ a.nombres }} {{ a.apellidos }}
+                                </div>
+                                {% if a.referencia %}
+                                    <div class="guest-passes">
+                                        {{ a.referencia }}
+                                    </div>
+                                {% endif %}
+
+                                <div class="guest-passes">
+                                    Pases asignados: {{ a.numero_pases }}
+                                </div>
+
+                                {% if a.confirmado %}
+                                    <div class="already">
+                                        Ya confirmó {{ a.pases_confirmados }} pase(s).
+                                    </div>
+                                {% endif %}
+
+                                <select name="pases_confirmados" required>
+                                    {% for i in "123456789"|make_list %}
+                                        {% if forloop.counter <= a.numero_pases %}
+                                            <option value="{{ forloop.counter }}"
+                                                {% if a.confirmado and a.pases_confirmados == forloop.counter %}selected{% endif %}>
+                                                {{ forloop.counter }} pase(s)
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+
+                                <button type="submit">Confirmar asistencia</button>
+                            </form>
+                        {% endfor %}
+                    </div>
+                {% elif busqueda %}
+                    <div class="alert error" style="margin-top:14px;">
+                        No encontramos ese nombre. Verifica cómo fue registrado.
+                    </div>
+                {% endif %}
+            </div>
+
+        {% else %}
+
+            <button class="btn-enter" onclick="entrar()">
+                Entrar
+            </button>
+
+        {% endif %}
+
+    {% endwith %}
 </div>
 
 <script>

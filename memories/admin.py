@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Evento, Momento, Foto
+from .models import Evento, Momento, Foto, Asistente
 
 
 @admin.register(Evento)
@@ -43,3 +43,17 @@ class FotoAdmin(admin.ModelAdmin):
     @admin.action(description="Quitar destacadas")
     def quitar_destacada(self, request, queryset):
         queryset.update(destacada=False)
+
+@admin.register(Asistente)
+class AsistenteAdmin(admin.ModelAdmin):
+    list_display = (
+        "apellidos",
+        "nombres",
+        "evento",
+        "numero_pases",
+        "confirmado",
+        "pases_confirmados",
+        "confirmado_en",
+    )
+    search_fields = ("nombres", "apellidos")
+    list_filter = ("evento", "confirmado")

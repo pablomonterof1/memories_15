@@ -5,6 +5,7 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 from django.core.files.base import ContentFile
+import unicodedata
 
 
 class Evento(models.Model):
@@ -130,3 +131,45 @@ class Foto(models.Model):
                 pass
 
         super().save(*args, **kwargs)
+
+def normalizar_texto(texto):
+    texto = texto or ""
+    texto = texto.strip().lower()
+    texto = unicodedata.normalize("NFD", texto)
+    texto = "".join(c for c in texto if unicodedata.category(c) != "Mn")
+    return " ".join(texto.split())
+
+class Asistente(models.Model):
+    evento = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name="asistentes")
+    nombres = models.CharField(max_length=100)
+    apellidos = models.CharField(max_length=100)
+    numero_pases = models.PositiveIntegerField(default=1)
+
+    # Opcional para diferenciar repetidos
+    referencia = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text="Ejemplo: Familia Pérez, Mesa 3, amiga del colegio, etc."
+    )
+
+    # Campo interno para búsqueda
+    nombre_busqueda = models.CharField(max_length=250, blank=True, db_index=True)
+
+    confirmado = models.BooleanField(default=False)
+    pases_confirmados = models.PositiveIntegerField(default=0)
+    confirmado_en = models.DateTimeField(blank=True, null=True)
+
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Asistente"
+        verbose_name_plural = "Asistentes"
+        ordering = ["apellidos", "nombres"]
+
+    def save(self, *args, **kwargs):
+        completo = f"{self.nombres} {self.apellidos}"
+        self.nombre_busqueda = normalizar_texto(completo)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.apellidos} {self.nombres} - {self.numero_pases} pase(s)"
