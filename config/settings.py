@@ -26,6 +26,8 @@ FORCE_SCRIPT_NAME = config("FORCE_SCRIPT_NAME", default="")
 
 ALLOWED_HOSTS = []
 
+LOGIN_URL = 'usuarios:login'
+LOGIN_REDIRECT_URL = '/'
 
 # Application definition
 

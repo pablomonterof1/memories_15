@@ -4,7 +4,7 @@
 <div class="row justify-content-center" style="align-items: center; display: flex; justify-content: center; height: 93vh;">
     <div class="col-lg-5">
         <div class="card card-soft p-4" style="background-color: #ffffff99;">
-            <h2 class="mb-3 text-center">Iniciar sesión</h2>
+            <h2 class="mb-3 text-center text-dark">Iniciar sesión</h2>
 
             <form method="post">
                 {% csrf_token %}
@@ -13,12 +13,12 @@
                 <input type="hidden" name="next" value="{{ next }}">
 
                 <div class="mb-3">
-                    <label for="username" class="form-label">Usuario</label>
+                    <label for="username" class="form-label text-dark">Usuario</label>
                     <input type="text" class="form-control" id="username" name="username" required>
                 </div>
 
                 <div class="mb-3">
-                    <label for="password" class="form-label">Contraseña</label>
+                    <label for="password" class="form-label text-dark">Contraseña</label>
                     <input type="password" class="form-control" id="password" name="password" required>
                 </div>
 

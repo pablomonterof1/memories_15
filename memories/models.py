@@ -140,36 +140,54 @@ def normalizar_texto(texto):
     return " ".join(texto.split())
 
 class Asistente(models.Model):
+    ESTADO_PENDIENTE = "pendiente"
+    ESTADO_ASISTE = "asiste"
+    ESTADO_NO_ASISTE = "no_asiste"
+
+    ESTADO_CHOICES = [
+        (ESTADO_PENDIENTE, "Pendiente"),
+        (ESTADO_ASISTE, "Asiste"),
+        (ESTADO_NO_ASISTE, "No asistira"),
+    ]
+
     evento = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name="asistentes")
-    nombres = models.CharField(max_length=100)
-    apellidos = models.CharField(max_length=100)
-    numero_pases = models.PositiveIntegerField(default=1)
 
-    # Opcional para diferenciar repetidos
-    referencia = models.CharField(
-        max_length=120,
-        blank=True,
-        help_text="Ejemplo: Familia Pérez, Mesa 3, amiga del colegio, etc."
-    )
+    nombres = models.CharField(max_length=180)
 
-    # Campo interno para búsqueda
+    adultos = models.PositiveIntegerField(default=1)
+    ninos = models.PositiveIntegerField(default=0)
+
     nombre_busqueda = models.CharField(max_length=250, blank=True, db_index=True)
 
-    confirmado = models.BooleanField(default=False)
-    pases_confirmados = models.PositiveIntegerField(default=0)
-    confirmado_en = models.DateTimeField(blank=True, null=True)
+    estado_confirmacion = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default=ESTADO_PENDIENTE,
+        db_index=True
+    )
 
+    adultos_confirmados = models.PositiveIntegerField(default=0)
+    ninos_confirmados = models.PositiveIntegerField(default=0)
+
+    confirmado_en = models.DateTimeField(blank=True, null=True)
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Asistente"
         verbose_name_plural = "Asistentes"
-        ordering = ["apellidos", "nombres"]
+        ordering = ["nombres"]
+
+    @property
+    def total_pases(self):
+        return self.adultos + self.ninos
+
+    @property
+    def total_confirmados(self):
+        return self.adultos_confirmados + self.ninos_confirmados
 
     def save(self, *args, **kwargs):
-        completo = f"{self.nombres} {self.apellidos}"
-        self.nombre_busqueda = normalizar_texto(completo)
+        self.nombre_busqueda = normalizar_texto(self.nombres)
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.apellidos} {self.nombres} - {self.numero_pases} pase(s)"
+        return f"{self.nombres} - {self.total_pases} pase(s)"

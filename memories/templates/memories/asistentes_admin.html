@@ -12,9 +12,18 @@
       <p class="text-white-50 mb-0">{{ evento.nombre }}</p>
     </div>
 
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'memories:exportar_asistentes_excel' evento.token %}" class="btn btn-success">
+    Exportar Excel
+  </a>
     <a href="{% url 'memories:evento_home' evento.token %}" class="btn btn-outline-light">
       Volver al evento
     </a>
+    <a href="{% url 'memories:intro' evento.token %}" class="btn btn-outline-light">
+      Volver al inicio
+    </a>
+    </div>
+
   </div>
 
   {% if messages %}
@@ -38,7 +47,7 @@
     <div class="col-md-3">
       <div class="card shadow-sm border-0">
         <div class="card-body text-center">
-          <div class="text-muted small">Confirmados</div>
+          <div class="text-muted small">Sí asistirán</div>
           <h3 class="mb-0 text-success">{{ confirmados }}</h3>
         </div>
       </div>
@@ -47,8 +56,8 @@
     <div class="col-md-3">
       <div class="card shadow-sm border-0">
         <div class="card-body text-center">
-          <div class="text-muted small">Pendientes</div>
-          <h3 class="mb-0 text-danger">{{ pendientes }}</h3>
+          <div class="text-muted small">No asistirán</div>
+          <h3 class="mb-0 text-danger">{{ no_asisten }}</h3>
         </div>
       </div>
     </div>
@@ -56,8 +65,28 @@
     <div class="col-md-3">
       <div class="card shadow-sm border-0">
         <div class="card-body text-center">
-          <div class="text-muted small">Pases confirmados</div>
-          <h3 class="mb-0">{{ total_pases_confirmados }} / {{ total_pases }}</h3>
+          <div class="text-muted small">Pendientes</div>
+          <h3 class="mb-0 text-warning">{{ pendientes }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <div class="text-muted small">Adultos confirmados</div>
+          <h3 class="mb-0">{{ total_adultos_confirmados }} / {{ total_adultos }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center">
+          <div class="text-muted small">Niños confirmados</div>
+          <h3 class="mb-0">{{ total_ninos_confirmados }} / {{ total_ninos }}</h3>
         </div>
       </div>
     </div>
@@ -75,12 +104,10 @@
             <label class="form-label">Archivo Excel</label>
             <input type="file" name="archivo_excel" class="form-control" accept=".xlsx" required>
             <div class="form-text">
-              El Excel debe tener las columnas: nombres, apellidos, numero_pases, referencia
+              El Excel debe tener las columnas: <strong>nombres</strong>, <strong>adultos</strong>, <strong>ninos</strong>
             </div>
           </div>
 
-          <br>
-          <br>
           <div class="col-md-4 d-grid">
             <button type="submit" class="btn btn-primary">
               Subir Excel
@@ -100,12 +127,14 @@
           <thead class="table-dark">
             <tr>
               <th>#</th>
-              <th>Apellidos</th>
               <th>Nombres</th>
-              <th>Referencia</th>
-              <th class="text-center">Pases</th>
-              <th class="text-center">Confirmado</th>
-              <th class="text-center">Pases confirmados</th>
+              <th class="text-center">Adultos</th>
+              <th class="text-center">Niños</th>
+              <th class="text-center">Total pases</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Adultos confirmados</th>
+              <th class="text-center">Niños confirmados</th>
+              <th class="text-center">Total confirmados</th>
               <th>Fecha confirmación</th>
             </tr>
           </thead>
@@ -114,22 +143,24 @@
             {% for a in asistentes %}
               <tr>
                 <td>{{ forloop.counter }}</td>
-                <td>{{ a.apellidos }}</td>
                 <td>{{ a.nombres }}</td>
-                <td>{{ a.referencia|default:"-" }}</td>
-                <td class="text-center">{{ a.numero_pases }}</td>
+                <td class="text-center">{{ a.adultos }}</td>
+                <td class="text-center">{{ a.ninos }}</td>
+                <td class="text-center">{{ a.total_pases }}</td>
 
                 <td class="text-center">
-                  {% if a.confirmado %}
-                    <span class="badge bg-success">Sí</span>
+                  {% if a.estado_confirmacion == "asiste" %}
+                    <span class="badge bg-success">Asiste</span>
+                  {% elif a.estado_confirmacion == "no_asiste" %}
+                    <span class="badge bg-danger">No asiste</span>
                   {% else %}
-                    <span class="badge bg-secondary">No</span>
+                    <span class="badge bg-secondary">Pendiente</span>
                   {% endif %}
                 </td>
 
-                <td class="text-center">
-                  {{ a.pases_confirmados }}
-                </td>
+                <td class="text-center">{{ a.adultos_confirmados }}</td>
+                <td class="text-center">{{ a.ninos_confirmados }}</td>
+                <td class="text-center">{{ a.total_confirmados }}</td>
 
                 <td>
                   {% if a.confirmado_en %}
@@ -141,7 +172,7 @@
               </tr>
             {% empty %}
               <tr>
-                <td colspan="8" class="text-center text-muted py-4">
+                <td colspan="10" class="text-center text-muted py-4">
                   Todavía no existen asistentes registrados.
                 </td>
               </tr>

@@ -14,6 +14,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum, Count
 from openpyxl import load_workbook
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
 
 def intro(request, token):
     evento = get_object_or_404(Evento, token=token, activo=True)
@@ -36,26 +40,49 @@ def intro(request, token):
 
     if request.method == "POST":
         asistente_id = request.POST.get("asistente_id")
-        pases_confirmados = request.POST.get("pases_confirmados")
+        accion = request.POST.get("accion")
 
         asistente = get_object_or_404(Asistente, id=asistente_id, evento=evento)
 
-        try:
-            pases_confirmados = int(pases_confirmados)
-        except ValueError:
-            pases_confirmados = 0
-
-        if pases_confirmados < 1:
-            error = "Debe confirmar al menos 1 pase."
-        elif pases_confirmados > asistente.numero_pases:
-            error = f"No puede confirmar más de {asistente.numero_pases} pase(s)."
-        else:
-            asistente.confirmado = True
-            asistente.pases_confirmados = pases_confirmados
+        if accion == "no_asiste":
+            asistente.estado_confirmacion = Asistente.ESTADO_NO_ASISTE
+            asistente.adultos_confirmados = 0
+            asistente.ninos_confirmados = 0
             asistente.confirmado_en = timezone.now()
             asistente.save()
 
-            mensaje = "Asistencia confirmada correctamente. ¡Gracias!"
+            mensaje = "Respuesta registrada correctamente. Gracias por confirmar."
+
+        else:
+            adultos_confirmados = request.POST.get("adultos_confirmados")
+            ninos_confirmados = request.POST.get("ninos_confirmados")
+
+            try:
+                adultos_confirmados = int(adultos_confirmados)
+            except:
+                adultos_confirmados = 0
+
+            try:
+                ninos_confirmados = int(ninos_confirmados)
+            except:
+                ninos_confirmados = 0
+
+            if adultos_confirmados < 0 or ninos_confirmados < 0:
+                error = "Los valores confirmados no pueden ser negativos."
+            elif adultos_confirmados > asistente.adultos:
+                error = f"No puede confirmar mas de {asistente.adultos} adulto(s)."
+            elif ninos_confirmados > asistente.ninos:
+                error = f"No puede confirmar mas de {asistente.ninos} nino(s)."
+            elif adultos_confirmados + ninos_confirmados < 1:
+                error = "Debe confirmar al menos 1 asistente o seleccionar No asistire."
+            else:
+                asistente.estado_confirmacion = Asistente.ESTADO_ASISTE
+                asistente.adultos_confirmados = adultos_confirmados
+                asistente.ninos_confirmados = ninos_confirmados
+                asistente.confirmado_en = timezone.now()
+                asistente.save()
+
+                mensaje = "Asistencia confirmada correctamente. Gracias."
 
     return render(request, "memories/intro.html", {
         "evento": evento,
@@ -233,8 +260,6 @@ def asistentes_admin(request, token):
             actualizados = 0
             omitidos = 0
 
-            # Encabezados esperados:
-            # nombres | apellidos | numero_pases | referencia
             headers = []
             for cell in ws[1]:
                 headers.append(str(cell.value).strip().lower() if cell.value else "")
@@ -249,48 +274,55 @@ def asistentes_admin(request, token):
 
             for row in ws.iter_rows(min_row=2, values_only=True):
                 nombres = obtener(row, "nombres")
-                apellidos = obtener(row, "apellidos")
-                numero_pases = obtener(row, "numero_pases")
-                referencia = obtener(row, "referencia")
+                adultos = obtener(row, "adultos")
+                ninos = obtener(row, "ninos")
 
-                if not nombres or not apellidos:
+                if not nombres:
                     omitidos += 1
                     continue
 
                 try:
-                    numero_pases = int(numero_pases)
+                    adultos = int(float(adultos))
                 except:
-                    numero_pases = 1
+                    adultos = 0
 
-                if numero_pases < 1:
-                    numero_pases = 1
+                try:
+                    ninos = int(float(ninos))
+                except:
+                    ninos = 0
 
-                # Busca si ya existe el mismo asistente en este evento
+                if adultos < 0:
+                    adultos = 0
+
+                if ninos < 0:
+                    ninos = 0
+
+                if adultos + ninos < 1:
+                    omitidos += 1
+                    continue
+
                 existente = Asistente.objects.filter(
                     evento=evento,
                     nombres__iexact=nombres,
-                    apellidos__iexact=apellidos,
-                    referencia__iexact=referencia,
                 ).first()
 
                 if existente:
-                    existente.numero_pases = numero_pases
-                    existente.referencia = referencia
+                    existente.adultos = adultos
+                    existente.ninos = ninos
                     existente.save()
                     actualizados += 1
                 else:
                     Asistente.objects.create(
                         evento=evento,
                         nombres=nombres,
-                        apellidos=apellidos,
-                        numero_pases=numero_pases,
-                        referencia=referencia,
+                        adultos=adultos,
+                        ninos=ninos,
                     )
                     creados += 1
 
             messages.success(
                 request,
-                f"Importación finalizada. Creados: {creados}, actualizados: {actualizados}, omitidos: {omitidos}."
+                f"Importacion finalizada. Creados: {creados}, actualizados: {actualizados}, omitidos: {omitidos}."
             )
 
         except Exception as e:
@@ -298,21 +330,184 @@ def asistentes_admin(request, token):
 
         return redirect("memories:asistentes_admin", token=evento.token)
 
-    asistentes = Asistente.objects.filter(evento=evento).order_by("apellidos", "nombres")
+    asistentes = Asistente.objects.filter(evento=evento).order_by("nombres")
 
     total_asistentes = asistentes.count()
-    confirmados = asistentes.filter(confirmado=True).count()
-    pendientes = total_asistentes - confirmados
+    confirmados = asistentes.filter(estado_confirmacion=Asistente.ESTADO_ASISTE).count()
+    no_asisten = asistentes.filter(estado_confirmacion=Asistente.ESTADO_NO_ASISTE).count()
+    pendientes = asistentes.filter(estado_confirmacion=Asistente.ESTADO_PENDIENTE).count()
 
-    total_pases = asistentes.aggregate(total=Sum("numero_pases"))["total"] or 0
-    total_pases_confirmados = asistentes.aggregate(total=Sum("pases_confirmados"))["total"] or 0
+    total_adultos = asistentes.aggregate(total=Sum("adultos"))["total"] or 0
+    total_ninos = asistentes.aggregate(total=Sum("ninos"))["total"] or 0
+
+    total_adultos_confirmados = asistentes.aggregate(total=Sum("adultos_confirmados"))["total"] or 0
+    total_ninos_confirmados = asistentes.aggregate(total=Sum("ninos_confirmados"))["total"] or 0
 
     return render(request, "memories/asistentes_admin.html", {
         "evento": evento,
         "asistentes": asistentes,
         "total_asistentes": total_asistentes,
         "confirmados": confirmados,
+        "no_asisten": no_asisten,
         "pendientes": pendientes,
-        "total_pases": total_pases,
-        "total_pases_confirmados": total_pases_confirmados,
+        "total_adultos": total_adultos,
+        "total_ninos": total_ninos,
+        "total_adultos_confirmados": total_adultos_confirmados,
+        "total_ninos_confirmados": total_ninos_confirmados,
     })
+
+@login_required
+def exportar_asistentes_excel(request, token):
+    evento = get_object_or_404(Evento, token=token, activo=True)
+    asistentes = Asistente.objects.filter(evento=evento).order_by("nombres")
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Confirmaciones"
+
+    # Colores
+    azul = "0E1424"
+    dorado = "CC9933"
+    verde = "D9EAD3"
+    rojo = "F4CCCC"
+    amarillo = "FFF2CC"
+    gris = "F3F4F6"
+
+    fill_title = PatternFill("solid", fgColor=azul)
+    fill_header = PatternFill("solid", fgColor=dorado)
+    fill_success = PatternFill("solid", fgColor=verde)
+    fill_danger = PatternFill("solid", fgColor=rojo)
+    fill_pending = PatternFill("solid", fgColor=amarillo)
+    fill_gray = PatternFill("solid", fgColor=gris)
+
+    font_title = Font(color="FFFFFF", bold=True, size=14)
+    font_header = Font(color="000000", bold=True)
+    font_bold = Font(bold=True)
+
+    thin = Side(border_style="thin", color="DDDDDD")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    # Titulo
+    ws.merge_cells("A1:I1")
+    ws["A1"] = f"Resumen de confirmaciones - {evento.nombre}"
+    ws["A1"].fill = fill_title
+    ws["A1"].font = font_title
+    ws["A1"].alignment = Alignment(horizontal="center")
+
+    # Totales
+    total_registros = asistentes.count()
+    total_asisten = asistentes.filter(estado_confirmacion=Asistente.ESTADO_ASISTE).count()
+    total_no_asisten = asistentes.filter(estado_confirmacion=Asistente.ESTADO_NO_ASISTE).count()
+    total_pendientes = asistentes.filter(estado_confirmacion=Asistente.ESTADO_PENDIENTE).count()
+
+    total_adultos = sum(a.adultos for a in asistentes)
+    total_ninos = sum(a.ninos for a in asistentes)
+    total_adultos_confirmados = sum(a.adultos_confirmados for a in asistentes)
+    total_ninos_confirmados = sum(a.ninos_confirmados for a in asistentes)
+
+    resumen = [
+        ("Total registros", total_registros),
+        ("Si asistiran", total_asisten),
+        ("No asistiran", total_no_asisten),
+        ("Pendientes", total_pendientes),
+        ("Adultos confirmados", f"{total_adultos_confirmados} / {total_adultos}"),
+        ("Ninos confirmados", f"{total_ninos_confirmados} / {total_ninos}"),
+    ]
+
+    row = 3
+    for etiqueta, valor in resumen:
+        ws[f"A{row}"] = etiqueta
+        ws[f"B{row}"] = valor
+        ws[f"A{row}"].font = font_bold
+        ws[f"A{row}"].fill = fill_gray
+        ws[f"A{row}"].border = border
+        ws[f"B{row}"].border = border
+        row += 1
+
+    # Encabezados
+    headers = [
+        "#",
+        "Nombres",
+        "Adultos asignados",
+        "Ninos asignados",
+        "Total pases",
+        "Estado",
+        "Adultos confirmados",
+        "Ninos confirmados",
+        "Total confirmados",
+    ]
+
+    start_row = 11
+
+    for col, header in enumerate(headers, start=1):
+        cell = ws.cell(row=start_row, column=col)
+        cell.value = header
+        cell.fill = fill_header
+        cell.font = font_header
+        cell.alignment = Alignment(horizontal="center")
+        cell.border = border
+
+    # Datos
+    for idx, a in enumerate(asistentes, start=1):
+        fila = start_row + idx
+
+        if a.estado_confirmacion == Asistente.ESTADO_ASISTE:
+            estado = "Asiste"
+            fill_estado = fill_success
+        elif a.estado_confirmacion == Asistente.ESTADO_NO_ASISTE:
+            estado = "No asiste"
+            fill_estado = fill_danger
+        else:
+            estado = "Pendiente"
+            fill_estado = fill_pending
+
+        datos = [
+            idx,
+            a.nombres,
+            a.adultos,
+            a.ninos,
+            a.total_pases,
+            estado,
+            a.adultos_confirmados,
+            a.ninos_confirmados,
+            a.total_confirmados,
+        ]
+
+        for col, valor in enumerate(datos, start=1):
+            cell = ws.cell(row=fila, column=col)
+            cell.value = valor
+            cell.border = border
+            cell.alignment = Alignment(vertical="center")
+
+            if col == 6:
+                cell.fill = fill_estado
+                cell.font = font_bold
+
+    # Ajustes visuales
+    widths = {
+        "A": 6,
+        "B": 38,
+        "C": 18,
+        "D": 16,
+        "E": 14,
+        "F": 16,
+        "G": 22,
+        "H": 20,
+        "I": 20,
+    }
+
+    for col, width in widths.items():
+        ws.column_dimensions[col].width = width
+
+    ws.freeze_panes = "A12"
+    ws.auto_filter.ref = f"A{start_row}:I{start_row + total_registros}"
+
+    filename = f"confirmaciones_{evento.token}.xlsx"
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    wb.save(response)
+    return response

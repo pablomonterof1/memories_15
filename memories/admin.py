@@ -47,13 +47,24 @@ class FotoAdmin(admin.ModelAdmin):
 @admin.register(Asistente)
 class AsistenteAdmin(admin.ModelAdmin):
     list_display = (
-        "apellidos",
         "nombres",
         "evento",
-        "numero_pases",
-        "confirmado",
-        "pases_confirmados",
+        "adultos",
+        "ninos",
+        "total_pases_display",
+        "estado_confirmacion",
+        "total_confirmados_display",
         "confirmado_en",
     )
-    search_fields = ("nombres", "apellidos")
-    list_filter = ("evento", "confirmado")
+
+    search_fields = ("nombres",)
+    list_filter = ("evento", "estado_confirmacion")
+    ordering = ("nombres",)
+
+    def total_pases_display(self, obj):
+        return obj.total_pases
+    total_pases_display.short_description = "Total pases"
+
+    def total_confirmados_display(self, obj):
+        return obj.total_confirmados
+    total_confirmados_display.short_description = "Confirmados"

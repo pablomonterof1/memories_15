@@ -11,4 +11,5 @@ urlpatterns = [
     path("e/<slug:token>/foto/<int:foto_id>/", views.foto_detalle, name="foto_detalle"),
     path("e/<slug:token>/foto/<int:foto_id>/ocultar/", views.ocultar_foto, name="ocultar_foto"),
     path("e/<slug:token>/asistentes/", views.asistentes_admin, name="asistentes_admin"),
+    path("e/<slug:token>/asistentes/exportar/", views.exportar_asistentes_excel, name="exportar_asistentes_excel"),
 ]

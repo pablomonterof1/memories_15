@@ -7,6 +7,8 @@
 <title>Bienvenida ✨</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500&family=Great+Vibes&display=swap" rel="stylesheet">
+<link rel="icon" href="https://ailectus.com/imagenes/ic.png" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
 <style>
 body {
@@ -165,7 +167,7 @@ body {
     margin-top: 15px;
     display: grid;
     gap: 12px;
-    max-height: 260px;
+    max-height: 350px;
     overflow-y: auto;
     padding-right: 4px;
 }
@@ -209,6 +211,11 @@ body {
     border: 1px solid rgba(239,68,68,.45);
 }
 
+.btn-no {
+    background: rgba(239,68,68,.95) !important;
+    color: white !important;
+}
+
 @media (max-width: 520px) {
     body {
         overflow-y: auto;
@@ -244,10 +251,201 @@ body {
         width: 100%;
     }
 }
+/* 🍔 Botón flotante menú */
+.menu-floating-btn {
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 1000;
+
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(15, 23, 42, 0.70);
+    color: white;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 1.6rem;
+    cursor: pointer;
+
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    box-shadow: 0 8px 28px rgba(0,0,0,.35);
+}
+
+.menu-floating-btn:hover {
+    background: rgba(255,255,255,0.18);
+    transform: scale(1.05);
+}
+
+/* Fondo oscuro al abrir menú */
+.menu-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 1001;
+    opacity: 0;
+    pointer-events: none;
+    transition: .3s ease;
+}
+
+.menu-backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 📌 Menú lateral */
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: -310px;
+    width: 290px;
+    height: 100vh;
+    z-index: 1002;
+
+    background: linear-gradient(to bottom, rgba(15, 23, 42, .96), rgba(2, 6, 23, .98));
+    color: white;
+
+    border-right: 1px solid rgba(255,255,255,.14);
+    box-shadow: 8px 0 30px rgba(0,0,0,.45);
+
+    padding: 22px;
+    box-sizing: border-box;
+
+    transition: .35s ease;
+}
+
+.side-menu.show {
+    left: 0;
+}
+
+.side-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 22px;
+}
+
+.side-menu-title {
+    color: gold;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.menu-close {
+    border: none;
+    background: transparent;
+    color: white;
+    font-size: 1.6rem;
+    cursor: pointer;
+}
+
+.menu-links {
+    display: grid;
+    gap: 10px;
+}
+
+.menu-links a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 12px 14px;
+    border-radius: 16px;
+
+    color: white;
+    text-decoration: none;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+
+    font-size: .95rem;
+}
+
+.menu-links a:hover {
+    background: rgba(255,215,0,0.18);
+    color: gold;
+    transform: translateX(4px);
+}
+
+.menu-links hr {
+    border-color: rgba(255,255,255,.18);
+    width: 100%;
+    margin: 8px 0;
+}
+
+.logout-link {
+    color: #fecaca !important;
+}
+
+.logout-link:hover {
+    background: rgba(239,68,68,.25) !important;
+    color: white !important;
+}
 </style>
 </head>
 
 <body>
+<!-- Botón menú -->
+<button class="menu-floating-btn" type="button" onclick="abrirMenu()" title="Menú">
+    <i class="bi bi-list"></i>
+</button>
+
+<!-- Fondo oscuro -->
+<div class="menu-backdrop" id="menuBackdrop" onclick="cerrarMenu()"></div>
+
+<!-- Menú lateral -->
+<nav class="side-menu" id="sideMenu">
+    <div class="side-menu-header">
+        <div class="side-menu-title">Mis 15 Ytzel</div>
+        <button class="menu-close" type="button" onclick="cerrarMenu()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <div class="menu-links">
+        <a href="{% url 'memories:intro' evento.token %}">
+            <i class="bi bi-stars"></i>
+            Intro
+        </a>
+
+        <a href="{% url 'memories:evento_home' evento.token %}">
+            <i class="bi bi-house-heart"></i>
+            Evento
+        </a>
+
+        <a href="{% url 'memories:muro' evento.token %}">
+            <i class="bi bi-images"></i>
+            Muro
+        </a>
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'memories:asistentes_admin' evento.token %}">
+                <i class="bi bi-people"></i>
+                Asistentes
+            </a>
+        {% endif %}
+
+        <hr>
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'usuarios:logout' %}?next={{ request.get_full_path|urlencode }}" class="logout-link">
+                <i class="bi bi-box-arrow-right"></i>
+                Cerrar sesión
+            </a>
+        {% else %}
+            <a href="{% url 'usuarios:login' %}?next={{ request.get_full_path|urlencode }}">
+                <i class="bi bi-box-arrow-in-right"></i>
+                Iniciar sesión
+            </a>
+        {% endif %}
+    </div>
+</nav>
 
 <script>
 for (let i = 0; i < 60; i++) {
@@ -278,14 +476,15 @@ for (let i = 0; i < 20; i++) {
 <div class="container">
     <div class="title">Mis 15 Ytzel</div>
     <div class="subtitle">Una noche mágica e inolvidable ✨</div>
-    /* Aquí va el bloque de confirmación de asistencia o el botón de entrada, dependiendo del estado */
+    <div class="subtitle">¡Se viene la fiesta del año! 🥳 Para que no falte nada y tu lugar esté listo, por favor indícanos si podrás asistir.</div>
+    <!-- /* Aquí va el bloque de confirmación de asistencia o el botón de entrada, dependiendo del estado */ -->
     {% with modo_confirmacion=True %}
 
         {% if modo_confirmacion %}
 
             <div class="attendance-box">
                 <h3>Confirma tu asistencia</h3>
-                <p>Busca tu nombre o tu apellido y confirma cuántos pases asistirán.</p>
+                <p>Busca tu nombre o tu apellido y confirma tu asistencia.</p>
 
                 {% if mensaje %}
                     <div class="alert success">{{ mensaje }}</div>
@@ -309,36 +508,54 @@ for (let i = 0; i < 20; i++) {
                                 <input type="hidden" name="asistente_id" value="{{ a.id }}">
 
                                 <div class="guest-name">
-                                    {{ a.nombres }} {{ a.apellidos }}
+                                    {{ a.nombres }}
                                 </div>
-                                {% if a.referencia %}
-                                    <div class="guest-passes">
-                                        {{ a.referencia }}
-                                    </div>
-                                {% endif %}
 
                                 <div class="guest-passes">
-                                    Pases asignados: {{ a.numero_pases }}
+                                    Pases asignados: {{ a.adultos }} adulto(s) y {{ a.ninos }} niño(s)
                                 </div>
 
-                                {% if a.confirmado %}
+                                {% if a.estado_confirmacion == "asiste" %}
                                     <div class="already">
-                                        Ya confirmó {{ a.pases_confirmados }} pase(s).
+                                        Ya confirmó asistencia: {{ a.adultos_confirmados }} adulto(s) y {{ a.ninos_confirmados }} niño(s).
+                                    </div>
+                                {% elif a.estado_confirmacion == "no_asiste" %}
+                                    <div class="already">
+                                        Ya registró que no asistirá.
                                     </div>
                                 {% endif %}
 
-                                <select name="pases_confirmados" required>
-                                    {% for i in "123456789"|make_list %}
-                                        {% if forloop.counter <= a.numero_pases %}
-                                            <option value="{{ forloop.counter }}"
-                                                {% if a.confirmado and a.pases_confirmados == forloop.counter %}selected{% endif %}>
-                                                {{ forloop.counter }} pase(s)
+                                <label>Adultos que asistirán</label>
+                                <select name="adultos_confirmados" required>
+                                    {% for i in "0123456789"|make_list %}
+                                        {% if forloop.counter0 <= a.adultos %}
+                                            <option value="{{ forloop.counter0 }}"
+                                                {% if a.adultos_confirmados == forloop.counter0 %}selected{% endif %}>
+                                                {{ forloop.counter0 }}
                                             </option>
                                         {% endif %}
                                     {% endfor %}
                                 </select>
 
-                                <button type="submit">Confirmar asistencia</button>
+                                <label>Niños que asistirán</label>
+                                <select name="ninos_confirmados" required>
+                                    {% for i in "0123456789"|make_list %}
+                                        {% if forloop.counter0 <= a.ninos %}
+                                            <option value="{{ forloop.counter0 }}"
+                                                {% if a.ninos_confirmados == forloop.counter0 %}selected{% endif %}>
+                                                {{ forloop.counter0 }}
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+
+                                <button type="submit" name="accion" value="asiste">
+                                    Confirmar asistencia
+                                </button>
+
+                                <button type="submit" name="accion" value="no_asiste" class="btn-no">
+                                    No asistiré
+                                </button>
                             </form>
                         {% endfor %}
                     </div>
@@ -368,6 +585,15 @@ function entrar() {
     setTimeout(() => {
         window.location.href = "{% url 'memories:evento_home' evento.token %}";
     }, 1000);
+}
+function abrirMenu() {
+    document.getElementById("sideMenu").classList.add("show");
+    document.getElementById("menuBackdrop").classList.add("show");
+}
+
+function cerrarMenu() {
+    document.getElementById("sideMenu").classList.remove("show");
+    document.getElementById("menuBackdrop").classList.remove("show");
 }
 </script>
 
