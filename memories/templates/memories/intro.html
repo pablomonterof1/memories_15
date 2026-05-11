@@ -530,7 +530,7 @@ for (let i = 0; i < 20; i++) {
 
             <div class="attendance-box">
                 <h3>Confirma tu asistencia</h3>
-                <p>Busca tu nombre o tu apellido y confirma tu asistencia.</p>
+                <p>Busca tu nombre y apellido para confirmar.</p>
 
                 {% if mensaje %}
                     <div class="alert success">{{ mensaje }}</div>
@@ -541,7 +541,7 @@ for (let i = 0; i < 20; i++) {
                 {% endif %}
 
                 <form method="get" class="search-form">
-                    <input type="text" name="q" value="{{ busqueda }}" placeholder="Escribe tu nombre o apellido">
+                    <input type="text" name="q" value="{{ busqueda }}" placeholder="Nombre y apellido">
                     <button type="submit">Buscar</button>
                 </form>
 
